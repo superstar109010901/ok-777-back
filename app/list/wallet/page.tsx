@@ -210,9 +210,9 @@ export default function WalletPage() {
           <Button type='primary' danger key="back" onClick={handleModalCancel}>
             取消
           </Button>,
-          <Button key="submit" type="primary"  onClick={handleModalOk}>
+          <Button key="submit" type="primary" onClick={handleModalOk}>
             确定          
-            </Button>
+          </Button>
           
         ]}
        

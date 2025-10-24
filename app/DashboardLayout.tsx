@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
-import { Layout, Menu, Avatar, Input, Button, Space, Typography, Breadcrumb } from 'antd';
+import React, { useState, useEffect } from 'react';
+import { Layout, Menu, Avatar, Input, Button, Space, Typography, Breadcrumb, Drawer } from 'antd';
 import { useRouter, usePathname } from 'next/navigation';
 import Image from 'next/image';
 import { 
@@ -17,7 +17,8 @@ import {
   CheckCircleOutlined,
   ExclamationCircleOutlined,
   UserOutlined,
-  ThunderboltFilled
+  ThunderboltFilled,
+  MenuOutlined
 } from '@ant-design/icons';
 
 const { Header, Sider, Content } = Layout;
@@ -29,8 +30,24 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const [collapsed, setCollapsed] = useState(false);
+  const [mobileMenuVisible, setMobileMenuVisible] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
+
+  // Handle responsive behavior
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+      if (window.innerWidth >= 768) {
+        setMobileMenuVisible(false);
+      }
+    };
+
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
   
   // Initialize openKeys based on current path
   const [openKeys, setOpenKeys] = useState<string[]>(() => {
@@ -49,6 +66,11 @@ export default function DashboardLayout({
   };
 
   const handleMenuClick = ({ key }: { key: string }) => {
+    // Close mobile menu on navigation
+    if (isMobile) {
+      setMobileMenuVisible(false);
+    }
+    
     switch (key) {
       case '1':
         // When clicking parent "仪表盘", redirect to first child "工作台"
@@ -227,23 +249,31 @@ export default function DashboardLayout({
     <Layout style={{ minHeight: '100vh' }}>
       <Header style={{ 
         background: '#fff', 
-        padding: '0 24px', 
+        padding: isMobile ? '0 16px' : '0 24px', 
         display: 'flex', 
         alignItems: 'center', 
         justifyContent: 'space-between',
         borderBottom: '1px solid #f0f0f0'
       }}>
-         {/* Left section - Logo */}
-         <div style={{ display: 'flex', alignItems: 'center' }}>
-           <img src="/images/logo.svg" alt="logo"  />
+         {/* Left section - Logo and Mobile Menu Button */}
+         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+           {isMobile && (
+             <Button 
+               type="text" 
+               icon={<MenuOutlined />} 
+               onClick={() => setMobileMenuVisible(true)}
+               style={{ fontSize: '18px' }}
+             />
+           )}
+           <img src="/images/logo.svg" alt="logo" style={{ height: '32px' }} />
          </div>
          
-       
+         {/* Center section - Search (hidden on mobile) */}
          
          
          {/* Right section - Utility icons */}
-         <div style={{display: 'flex', alignItems: 'center', gap: '5px'}}>
-         <Input.Search placeholder="搜索" style={{ width: 300 }} />
+         <div style={{display: 'flex', alignItems: 'center', gap: isMobile ? '8px' : '16px'}}>
+           {!isMobile && <Input.Search placeholder="搜索" style={{ width: 300 }} />}
            <Button type="text" icon={<SunOutlined />} />
            <Button type="text" icon={<BellOutlined />} />
            <Avatar style={{ backgroundColor: '#1890ff' }}>A</Avatar>
@@ -251,15 +281,17 @@ export default function DashboardLayout({
       </Header>
       
       <Layout>
-        <Sider 
-          trigger={null} 
-          collapsible 
-          collapsed={collapsed}
-          style={{ 
-            background: '#fff',
-            borderRight: '1px solid #f0f0f0'
-          }}
-        >
+        {/* Desktop Sider */}
+        {!isMobile && (
+          <Sider 
+            trigger={null} 
+            collapsible 
+            collapsed={collapsed}
+            style={{ 
+              background: '#fff',
+              borderRight: '1px solid #f0f0f0'
+            }}
+          >
           <Menu
             mode="inline"
             selectedKeys={getSelectedKeys()}
@@ -341,9 +373,106 @@ export default function DashboardLayout({
              ]}
           />
         </Sider>
+        )}
         
-        <Layout style={{ padding: '24px' }}>
-          <Content style={{ background: '#f5f5f5', padding: '24px', borderRadius: '8px' }}>
+        {/* Mobile Drawer */}
+        <Drawer
+          title="菜单"
+          placement="left"
+          onClose={() => setMobileMenuVisible(false)}
+          open={mobileMenuVisible}
+          width={280}
+          styles={{ body: { padding: 0 } }}
+        >
+          <Menu
+            mode="inline"
+            selectedKeys={getSelectedKeys()}
+            openKeys={openKeys}
+            onOpenChange={handleOpenChange}
+            style={{ height: '100%', borderRight: 0 }}
+            onClick={handleMenuClick}
+            items={[
+              {
+                key: '1',
+                icon: <DashboardOutlined />,
+                label: '仪表盘',
+                children: [
+                  { key: '1-1', label: '工作台' },
+                ],
+              },
+              {
+                key: '3',
+                icon: <BarChartOutlined />,
+                label: '数据可视化',
+                children: [
+                  { key: '3-1', label: '分析页' },
+                  { key: '3-2', label: '多维分析' },
+                ],
+              },
+              {
+                key: '4',
+                icon: <UnorderedListOutlined />,
+                label: '列表页',
+                children: [
+                  { key: '4-1', label: '卡片列表' },
+                  { key: '4-2', label: '查询表格' },
+                  { key: '4-3', label: '钱包管理' },
+                  { key: '4-4', label: '提现管理' },
+                  { key: '4-5', label: '存款管理' },
+                ],
+              },
+              {
+                key: '5',
+                icon: <FormOutlined />,
+                label: '表单页',
+                children: [
+                  { key: '5-1', label: '分布表单' },
+                  { key: '5-2', label: '分组表单' },
+                ],
+              },
+              {
+                key: '6',
+                icon: <FileTextOutlined />,
+                label: '详情页',
+                children: [
+                  { key: '6-1', label: '基础详情页' },
+                  { key: '6-2', label: '高级详情页' },
+                ],
+              },
+              {
+                key: '7',
+                icon: <CheckCircleOutlined />,
+                label: '结果页',
+                children: [
+                  { key: '7-1', label: '成功页' },
+                  { key: '7-2', label: '失败页' },
+                ],
+              },
+              {
+                key: '8',
+                icon: <ExclamationCircleOutlined />,
+                label: '异常页',
+              },
+              {
+                key: '9',
+                icon: <UserOutlined />,
+                label: '个人中心',
+                children: [
+                  { key: '9-1', label: '用户信息' },
+                  { key: '9-2', label: '用户设置' },
+                ],
+              },
+            ]}
+          />
+        </Drawer>
+        
+        <Layout style={{ padding: isMobile ? '16px' : '24px' }}>
+          <Content style={{ 
+            background: '#f5f5f5', 
+            padding: isMobile ? '16px' : '24px', 
+            borderRadius: '8px',
+            minHeight: 'calc(100vh - 64px - 48px)'
+          }}>
             {/* Breadcrumb */}
             <Breadcrumb 
               style={{ marginBottom: '16px' }}
