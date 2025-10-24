@@ -34,9 +34,10 @@ const contentDataTrendOption = {
     data: ['总内容量']
   },
   grid: {
-    left: '3%',
-    right: '4%',
-    bottom: '3%',
+    left: '5%',
+    right: '5%',
+    bottom: '10%',
+    top: '10%',
     containLabel: true
   },
   xAxis: {
